@@ -24,24 +24,19 @@ namespace AbeckDev.AzureFunctions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            //Say hi to the audience
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            RequestBody requestBody = null;
-            try
-            {
-                //Obtain session parameters from the request
-                requestBody = JsonConvert.DeserializeObject<RequestBody>(new StreamReader(req.Body).ReadToEnd());
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            //Read POST Body and bind content to Model for further processing
+            RequestBody requestBody = RequestHelper.GetRequestBody(req);
 
+            //Get Azure Interface from Azure helper class
             IAzure azure = AzureConnectionHelper.GetAzureInterface(req, requestBody);
 
             //Setup Azure Container Instance
             try
             {
+                //Define Container Instance based on request body input
                 var containerInstance = await azure.ContainerGroups.Define(requestBody.ContainerInstanceName)
                 .WithRegion(requestBody.AzureRegion)
                 .WithExistingResourceGroup(requestBody.ResourceGroupName)
@@ -57,7 +52,7 @@ namespace AbeckDev.AzureFunctions
                 .WithDnsPrefix(requestBody.ContainerSettings.DnsPrefix)
                 .WithTags(requestBody.BuildMetaData)
                 .CreateAsync();
-
+                //Return ACI name after creation
                 return new OkObjectResult(containerInstance.Name);
             }
             catch (Exception ex)

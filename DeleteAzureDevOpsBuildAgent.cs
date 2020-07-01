@@ -7,6 +7,11 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using AciDevOpsBuildAgent_Function;
+using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
+using Microsoft.Azure.Management.ContainerInstance.Fluent;
+using System.Linq;
 
 namespace AbeckDev.AzureFunctions
 {
@@ -14,22 +19,33 @@ namespace AbeckDev.AzureFunctions
     {
         [FunctionName("DeleteAzureDevOpsBuildAgent")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+            //Read POST Body and bind content to Model for further processing
+            RequestBody requestBody = RequestHelper.GetRequestBody(req);
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            //Get Azure Interface from Azure helper class
+            IAzure azure = AzureConnectionHelper.GetAzureInterface(req, requestBody);
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            var AciInstances = await azure.ContainerGroups.ListByResourceGroupAsync(requestBody.ResourceGroupName);
+            if (!isAciContainerPresent(AciInstances,requestBody.ContainerInstanceName))
+            {
+                return new BadRequestObjectResult("Container instance not found!");
+            }
+            await azure.ContainerGroups.DeleteByResourceGroupAsync(requestBody.ResourceGroupName, requestBody.ContainerInstanceName);
+            return new OkObjectResult("OK");
+        }
 
-            return new OkObjectResult(responseMessage);
+        public static bool isAciContainerPresent(IPagedCollection<IContainerGroup> containerGroups, string ContainerName)
+        {
+            if (containerGroups.FirstOrDefault(c => c.Name == ContainerName) == null)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }
