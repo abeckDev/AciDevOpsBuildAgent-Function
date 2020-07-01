@@ -7,6 +7,13 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using AciDevOpsBuildAgent_Function;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace AbeckDev.AzureFunctions
 {
@@ -14,22 +21,49 @@ namespace AbeckDev.AzureFunctions
     {
         [FunctionName("SetupAzureDevOpsBuildAgent")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+            RequestBody requestBody = null;
+            try
+            {
+                //Obtain session parameters from the request
+                requestBody = JsonConvert.DeserializeObject<RequestBody>(new StreamReader(req.Body).ReadToEnd());
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            IAzure azure = AzureConnectionHelper.GetAzureInterface(req, requestBody);
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            //Setup Azure Container Instance
+            try
+            {
+                var containerInstance = await azure.ContainerGroups.Define(requestBody.ContainerInstanceName)
+                .WithRegion(requestBody.AzureRegion)
+                .WithExistingResourceGroup(requestBody.ResourceGroupName)
+                .WithLinux()
+                .WithPrivateImageRegistry(requestBody.RegistrySettings.LoginServer, requestBody.RegistrySettings.Username, requestBody.RegistrySettings.Password)
+                .WithoutVolume()
+                .DefineContainerInstance(requestBody.ContainerInstanceName)
+                    .WithImage(requestBody.ContainerSettings.DockerImageName)
+                    .WithExternalTcpPort(requestBody.ContainerSettings.ExternalTcpPort)
+                    .WithCpuCoreCount(requestBody.ContainerSettings.CpuCoreCount)
+                    .WithMemorySizeInGB(requestBody.ContainerSettings.MemorySizeInGb)
+                    .Attach()
+                .WithDnsPrefix(requestBody.ContainerSettings.DnsPrefix)
+                .WithTags(requestBody.BuildMetaData)
+                .CreateAsync();
 
-            return new OkObjectResult(responseMessage);
+                return new OkObjectResult(containerInstance.Name);
+            }
+            catch (Exception ex)
+            {
+                return new BadRequestObjectResult(ex.Message);
+            }       
         }
     }
 }
