@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AciDevOpsBuildAgent-Function", "AciDevOpsBuildAgent-Function.csproj", "{C16F3ABA-563D-4F60-B239-3F317284BE4C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C16F3ABA-563D-4F60-B239-3F317284BE4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C16F3ABA-563D-4F60-B239-3F317284BE4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C16F3ABA-563D-4F60-B239-3F317284BE4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C16F3ABA-563D-4F60-B239-3F317284BE4C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CB386EDF-6D5E-4BD8-A3E1-FEC1EB974A69}
+	EndGlobalSection
+EndGlobal
