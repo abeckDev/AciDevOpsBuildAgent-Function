@@ -5,7 +5,7 @@ A set of Azure Functions to setup Azure DevOps Build Agents just in time using A
 ## Getting Started
 ToDo: Add a Intoduction to project and explaint setup process. 
 
-### Create AZure DevOps Build Agent via Azure Function
+### Create Azure DevOps Build Agent via Azure Function
 
 To create an Azure Container Instance with an Azure Function call the ```SetupAzureDevOpsBuildAgent``` Function and include a Json body with the following content:
 
