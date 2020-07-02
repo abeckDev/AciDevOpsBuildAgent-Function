@@ -21,6 +21,8 @@ jobs:
             docker-compose --file docker-compose.test.yml build
             docker-compose --file docker-compose.test.yml run sut
           else
+            pwd
+            ls
             docker build . --file Dockerfile
           fi
   push:
