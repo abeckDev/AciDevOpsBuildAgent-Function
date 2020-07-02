@@ -1,5 +1,6 @@
 FROM ubuntu:18.04
 # Credits for the Docker file process goes to: https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/docker?view=azure-devops
+
 # To make it easier for build and release pipelines to run apt-get,
 # configure apt to not require confirmation (assume the -y argument by default)
 ENV DEBIAN_FRONTEND=noninteractive
